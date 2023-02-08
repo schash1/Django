@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Delete unused imports
+autoflake -i -r --remove-all-unused-imports .
+
+# Sort imports
+isort .
+
+# Code formatting
+black -l 120 .
+
+# Readd all changed files
+git add .
