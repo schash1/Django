@@ -99,3 +99,7 @@ INSTALLED_APPS = [
     "markdownify.apps.MarkdownifyConfig",
     "mainapp",
 ]
+
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = BASE_DIR / "media"
