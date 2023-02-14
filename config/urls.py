@@ -1,15 +1,14 @@
-from django.urls import path
-
-from mainapp import views
-from mainapp.apps import MainappConfig
-
-app_name = MainappConfig.name
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+from django.views.generic import RedirectView
 
 urlpatterns = [
-    path("", views.MainPageView.as_view(), name="main_page"),
-    path("news/", views.NewsPageView.as_view(), name="news"),
-    path("courses/", views.CoursesPageView.as_view(), name="courses"),
-    path("contacts/", views.ContactsPageView.as_view(), name="contacts"),
-    path("doc_site/", views.DocSitePageView.as_view(), name="doc_site"),
-    path("login/", views.LoginPageView.as_view(), name="login"),
+    path("admin/", admin.site.urls),
+    path("", RedirectView.as_view(url="mainapp/")),
+    path("mainapp/", include("mainapp.urls", namespace="mainapp")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
