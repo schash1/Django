@@ -56,6 +56,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ),
     )
     date_joined = models.DateTimeField(_("date joined"), auto_now_add=True)
+    
+    help_text=_(
+            "Required. 150 characters or fewer. ASCII letters and digits only."
+        ),
 
     objects = UserManager()
 
