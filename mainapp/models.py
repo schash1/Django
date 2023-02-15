@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class News(models.Model):
@@ -17,49 +18,77 @@ class News(models.Model):
         self.deleted = True
         self.save()
 
+    class Meta:
+        verbose_name = _("News")
+        verbose_name_plural = _("News")
+        ordering = ("-created",)
 
-{% load static %}
 
-<!doctype html>
-<html lang="ru">
+class CoursesManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted=False)
 
-<head>
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+class Courses(models.Model):
+    objects = CoursesManager()
 
-  <!-- ChartJS -->
-  <link rel="stylesheet" href="{% static 'css/Chart.min.css' %}">
+    name = models.CharField(max_length=256, verbose_name="Name")
+    description = models.TextField(verbose_name="Description", blank=True, null=True)
+    description_as_markdown = models.BooleanField(verbose_name="As markdown", default=False)
+    cost = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Cost", default=0)
+    cover = models.CharField(max_length=25, default="no_image.svg", verbose_name="Cover")
+    created = models.DateTimeField(auto_now_add=True, verbose_name="Created")
+    updated = models.DateTimeField(auto_now=True, verbose_name="Edited")
+    deleted = models.BooleanField(default=False)
 
-  <!-- FontAwesome -->
-  <link rel="stylesheet" href="{% static 'css/fontawesome.all.min.css' %}">
+    def __str__(self) -> str:
+        return f"{self.pk} {self.name}"
 
-  <title>
-    {% block title %}
-    Welcome to Braniac!
-    {% endblock title %}
-  </title>
-</head>
+    def delete(self, *args):
+        self.deleted = True
+        self.save()
 
-<body>
 
-  {% include 'includes/main_menu.html' %}
+class Lesson(models.Model):
+    course = models.ForeignKey(Courses, on_delete=models.CASCADE)
+    num = models.PositiveIntegerField(verbose_name="Lesson number")
+    title = models.CharField(max_length=256, verbose_name="Name")
+    description = models.TextField(verbose_name="Description", blank=True, null=True)
+    description_as_markdown = models.BooleanField(verbose_name="As markdown", default=False)
+    created = models.DateTimeField(auto_now_add=True, verbose_name="Created", editable=False)
+    updated = models.DateTimeField(auto_now=True, verbose_name="Edited", editable=False)
+    deleted = models.BooleanField(default=False)
 
-  <div class="container-md">
+    def __str__(self) -> str:
+        return f"{self.course.name} | {self.num} | {self.title}"
 
-    {% block content %}
+    def delete(self, *args):
+        self.deleted = True
+        self.save()
 
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aspernatur
-    optio est esse? Veritatis laborum expedita
-    quibusdam numquam! Expedita amet nisi dolor similique autem, mollitia
-    ipsa et, natus vel explicabo
-    reprehenderit?
+    class Meta:
+        ordering = ("course", "num")
+        verbose_name = _("Lesson")
+        verbose_name_plural = _("Lessons")
 
-    {% endblock content %}
+
+class CourseTeachers(models.Model):
+    course = models.ManyToManyField(Courses)
+    name_first = models.CharField(max_length=128, verbose_name="Name")
+    name_second = models.CharField(max_length=128, verbose_name="Surname")
+    day_birth = models.DateField(verbose_name="Birth date")
+    deleted = models.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return "{0:0>3} {1} {2}".format(self.pk, self.name_second, self.name_first)
+
+    def delete(self, *args):
+        self.deleted = True
+        self.save()
+
+    class Meta:
+        verbose_name = _("Teacher")
+        verbose_name_plural = _("Teachers")
 
   </div>
 
