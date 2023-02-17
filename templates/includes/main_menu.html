@@ -1,64 +1,112 @@
-{% load static %}
+{% extends 'base.html' %}
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container">
-    <a class="navbar-brand" href="{% url 'mainapp:main_page' %}">
-      <img src="{% static 'img/logo.png' %}" alt="">
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse"
-      data-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent" aria-expanded="false"
-      aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+{% block title %}
+Новости
+{% endblock title %}
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav mr-auto">
-        <li
-          class="nav-item {% if request.resolver_match.view_name == 'mainapp:news' %}active{% endif %}">
-          <a class="nav-link" href="{% url 'mainapp:news' %}">Новости</a>
-        </li>
-        <li
-          class="nav-item {% if request.resolver_match.view_name == 'mainapp:courses' %}active{% endif %}">
-          <a class="nav-link" href="{% url 'mainapp:courses' %}">Курсы</a>
-        </li>
-        {% if user.is_authenticated %}
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="ddProfile"
-            role="button" data-toggle="dropdown" aria-haspopup="true"
-            aria-expanded="false">
-            Профиль
-          </a>
-          <div class="dropdown-menu" aria-labelledby="ddProfile">
-            <a class="dropdown-item"
-              href="{% url 'authapp:profile_edit' pk=request.user.pk %}">Редактировать
-              профиль</a>
-            <a class="dropdown-item" href="#">Мои курсы</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#">Модерация</a>
-            {% if user.is_superuser %}
-            <a class="dropdown-item" href="{% url 'admin:index' %}"
-              target="_blank">Административный
-              раздел</a>
-            <a class="dropdown-item" href="{% url 'mainapp:log_view' %}"
-              target="_blank">Лог</a>
-            {% endif %}
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="{% url 'authapp:logout' %}">Выход</a>
-          </div>
-        </li>
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'authapp:login' %}">Вход</a>
-        </li>
-        {% endif %}
-        <li
-          class="nav-item {% if request.resolver_match.view_name == 'mainapp:contacts' %}active{% endif %}">
-          <a class="nav-link" href="{% url 'mainapp:contacts' %}">Контакты</a>
-        </li>
-      </ul>
-      <span><a href="#">🇷🇺</a> <i class="fas fa-grip-lines-vertical"></i> <a
-          href="#">🇬🇧</a></span>
-    </div>
+{% block content %}
+
+{% if page_num %}
+<div class="card my-2">
+  <div class="card-body">
+    <p class="card-text">Текущая страница: {{ page_num }}</p>
   </div>
-</nav>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-8">
+
+    {% for item in object_list %}
+    <div class="card my-2">
+      <div class="card-body">
+        <h5 class="card-title">{{ item.title }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">
+          {{ item.created|date:"Y-m-d h-i-s" }}
+        </h6>
+        <p class="card-text">{{ item.preambule }}</p>
+        <div class="row">
+          <div class="col">
+            <a href="{% url 'mainapp:news_detail' pk=item.pk %}"
+              class="card-link">Подробнее</a>
+          </div>
+          {% if perms.mainapp.change_news %}
+          <div class="col-1 text-center">
+            <a href="{% url 'mainapp:news_update' pk=item.pk %}">
+              <i class="far fa-edit"></i>
+            </a>
+          </div>
+          {% endif %}
+          {% if perms.mainapp.delete_news %}
+          <div class="col-1 text-center">
+            <a href="{% url 'mainapp:news_delete' pk=item.pk %}">
+              <i class="far fa-trash-alt"></i>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card my-2 sticky-top">
+      <div class="card-header">
+        Фильтры
+      </div>
+      <div class="card-body">
+        <form action="">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="basic-addon1">Дата от...</span>
+            </div>
+            <input type="date" class="form-control" name="dateFrom">
+          </div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="basic-addon1">Дата до...</span>
+            </div>
+            <input type="date" class="form-control" name="dateTo">
+          </div>
+
+          <button type="submit"
+            class="btn btn-primary btn-block">Фильтровать</button>
+        </form>
+      </div>
+    </div>
+
+    {% if perms.mainapp.add_news %}
+    <a class="btn btn-primary btn-block" role="button"
+      href="{% url 'mainapp:news_create' %}">Добавить новость</a>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<div class="row justify-content-center align-items-center mt-3 mb-n3">
+  <nav aria-label="Page navigation example">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link"
+          href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+      {% endif %}
+
+      {% for item in page_obj.paginator.page_range %}
+      <li class="page-item
+        {% if item == page_obj.number %}active{% endif %}">
+        <a class="page-link" href="?page={{ item }}">{{ item }}</a>
+      </li>
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link"
+          href="?page={{ page_obj.next_page_number }}">Next</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+
+{% endblock content %}
